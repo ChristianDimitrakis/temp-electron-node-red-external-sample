@@ -21,10 +21,6 @@
       "start": "electron main.js",
       "test": "echo \" Warning: no test specified \""
   },
-  "repository": {
-      "type": "git",
-      "url": "git+https://github.com/dceejay/electron-node-red.git"
-  },
   "dependencies": {
       "electron-is-dev": "^2.0.0",
       "electron-store": "^8.0.1",
@@ -42,20 +38,6 @@
       "node-red-node-tail": "*",
       "@meowwolf/node-red-contrib-amqp": "*"
   },
-  "keywords": [
-      "electron",
-      "quick start",
-      "node-red"
-  ],
-  "author": {
-      "name": "Dave Conway-Jones",
-      "email": "dceejay@gmail.com"
-  },
-  "license": "Apache-2.0",
-  "bugs": {
-      "url": "https://github.com/dceejay/electron-node-red/issues"
-  },
-  "homepage": "https://github.com/dceejay/electron-node-red#readme",
   "devDependencies": {
       "electron": "^15.0.0",
       "electron-builder": "^23.3.3"

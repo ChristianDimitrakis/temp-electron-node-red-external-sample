@@ -1,9 +1,5 @@
 FROM electronuserland/builder:wine
 
-RUN apt-get install git -y
-
-RUN git clone https://github.com/dceejay/electron-node-red.git
-
 COPY zscaler.pem zscaler.pem
 COPY zscaler.crt zscaler.crt
 
@@ -19,5 +15,7 @@ WORKDIR electron-node-red
 COPY main.js main.js
 COPY package.json package.json
 COPY flows.json flows.json
-
+COPY build build
+COPY console.htm console.htm
+COPY nodered.png nodered.png
 RUN yarn && yarn dist -w
