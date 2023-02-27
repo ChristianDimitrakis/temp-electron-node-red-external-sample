@@ -1,4 +1,3 @@
-
 'use strict';
 const pkg = require('./package.json');
 let options;
@@ -9,46 +8,34 @@ if (pkg.hasOwnProperty("dependencies")) { packages = pkg["dependencies"] }
 // Some settings you can edit if you don't set them in package.json
 //console.log(options)
 const editable = options.editable || false;      // set this to false to create a run only application - no editor/no console
-const allowLoadSave = options.allowLoadSave || false; // set to true to allow import and export of flow file
-let showMap = options.showMap || false;       // set to true to add Worldmap to the menu
-const kioskMode = options.kioskMode || false;   // set to true to start in kiosk mode
 const addNodes = options.addNodes || false;      // set to false to block installing extra nodes
 let flowfile = options.flowFile || 'flows.json'; // default Flows file name - loaded at start
 
 const urldash = "/ui/#/0";          // url for the dashboard page
 const urledit = "/red";             // url for the editor page
 const urlconsole = "/console.htm";  // url for the console page
-const urlmap = "/worldmap";         // url for the worldmap
 const nrIcon = "nodered.png"        // Icon for the app in root dir (usually 256x256)
 
 let urlStart = urldash;                      // Start on this page
 if (!packages.hasOwnProperty("node-red-dashboard")) { urlStart = urledit; }
 if (options.start.toLowerCase() === "editor") { urlStart = urledit; }
-if (options.start.toLowerCase() === "map") { urlStart = urlmap; }
-
-if (!packages.hasOwnProperty("node-red-contrib-web-worldmap")) { showMap = false; }
 
 // TCP port to use
 const listenPort = "18880";                           // fix it if you like
-// const listenPort = parseInt(Math.random()*16383+49152)  // or random ephemeral port
 
 const os = require('os');
 const fs = require('fs');
-const url = require('url');
 const path = require('path');
 const http = require('http');
 const express = require("express");
 const electron = require('electron');
-const isDev = require('electron-is-dev');
 const Store = require('electron-store');
 const store = new Store();
 
-const {app, Menu, TouchBar} = electron;
+const {app, TouchBar} = electron;
 const ipc = electron.ipcMain;
-const dialog = electron.dialog;
 const BrowserWindow = electron.BrowserWindow;
-const Tray = electron.Tray;
-const { TouchBarButton, TouchBarSpacer } = TouchBar;
+const { TouchBarButton } = TouchBar;
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) { console.log("Second instance - quitting."); app.quit(); }
@@ -58,7 +45,6 @@ var red_app = express();
 
 // Add a simple route for static content served from 'public'
 red_app.use("/",express.static("web"));
-//red_app.use(express.static(__dirname +"/public"));
 
 // Create a server
 var server = http.createServer(red_app);
@@ -113,22 +99,15 @@ flowfile = store.get('flows',flowfile);
 var myFlow;
 try { myFlow = fs.readFileSync(flowfile).toString() }
 catch(e) { myFlow = []; }
-if (urlStart == urlmap && myFlow.indexOf("worldmap") == -1) { urlStart = urledit; }
 if (urlStart == urldash && myFlow.indexOf("ui_base") == -1) { urlStart = urledit; }
 myFlow = null;
 
-// console.log("CWD",process.cwd());
-// console.log("DIR",__dirname);
-// console.log("UserDir :",userdir);
-// console.log("PORT",listenPort);
 console.log("Store",app.getPath('userData'))
 console.log("FlowFile :",flowfile);
 
 // Keep a global reference of the window objects, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow = null;
 let conWindow;
-let tray;
 let logBuffer = [];
 let logLength = 250;    // No. of lines of console log to keep.
 const levels = [ "", "fatal", "error", "warn", "info", "debug", "trace" ];
@@ -193,144 +172,6 @@ if (settings.httpAdminRoot !== false) {
 // Serve the http nodes UI from /
 red_app.use(settings.httpNodeRoot,RED.httpNode);
 
-// Create the Application's main menu
-// var template = [{
-//     label: "View",
-//     submenu: [
-//         {   label: 'Open Flow',
-//             accelerator: "Shift+CmdOrCtrl+O",
-//             click() { openFlow(); }
-//         },
-//         {   label: 'Save Flow As',
-//             accelerator: "Shift+CmdOrCtrl+S",
-//             click() { saveFlow(); }
-//         },
-//         {   type: 'separator' },
-//         {   label: 'Console',
-//             accelerator: "Shift+CmdOrCtrl+C",
-//             click() { createConsole(); }
-//         },
-//         {   label: 'Dashboard',
-//             accelerator: "Shift+CmdOrCtrl+D",
-//             click() { mainWindow.loadURL("http://localhost:"+listenPort+urldash); }
-//         },
-//         {   label: 'Editor',
-//             accelerator: "Shift+CmdOrCtrl+E",
-//             click() { mainWindow.loadURL("http://localhost:"+listenPort+urledit); }
-//         },
-//         {   label: 'Worldmap',
-//             accelerator: "Shift+CmdOrCtrl+M",
-//             click() { mainWindow.loadURL("http://localhost:"+listenPort+urlmap); }
-//         },
-//         {   type: 'separator' },
-//         {   type: 'separator' },
-//         {   label: 'Documentation',
-//             click() { electron.shell.openExternal('https://nodered.org/docs') }
-//         },
-//         {   label: 'Flows and Nodes',
-//             click() { electron.shell.openExternal('https://flows.nodered.org') }
-//         },
-//         {   label: 'Discourse Forum',
-//             click() { electron.shell.openExternal('https://discourse.nodered.org/') }
-//         },
-//         { type: 'separator' },
-//         { role: 'togglefullscreen' },
-//         { role: 'quit' }
-//     ]
-// }];
-
-// if (!showMap) { template[0].submenu.splice(6,1); }
-
-// if (!editable) {
-//     template[0].submenu.splice(3,1);
-//     template[0].submenu.splice(4,1);
-// }
-
-// if (!allowLoadSave) { template[0].submenu.splice(0,2); }
-
-// // Top and tail menu on Mac
-// if (process.platform === 'darwin') {
-//     template[0].submenu.unshift({ type: 'separator' });
-//     template[0].submenu.unshift({ label: "About "+options.productName||"Node-RED Electron", selector: "orderFrontStandardAboutPanel:" });
-//     template[0].submenu.unshift({ type: 'separator' });
-//     template[0].submenu.unshift({ type: 'separator' });
-// }
-
-// // Add Dev menu if in dev mode
-// if (isDev) {
-//     template.push({
-//         label: 'Development',
-//         submenu: [
-//             { label: 'Reload', accelerator: 'CmdOrCtrl+R',
-//                 click (item, focusedWindow) {
-//                     if (focusedWindow) focusedWindow.reload()
-//                 }
-//             },
-//             { label: 'Toggle Developer Tools',
-//                 accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-//                 click (item, focusedWindow) {
-//                     if (focusedWindow) focusedWindow.webContents.toggleDevTools()
-//                 }
-//             }
-//         ]
-//     })
-// }
-
-// function saveFlow() {
-//     const file_path = dialog.showSaveDialogSync({
-//         title:"Save Flow As",
-//         filters:[{ name:'JSON', extensions:['json','flow'] }],
-//         properties: ["showHiddenFiles"],
-//         defaultPath: flowfile,
-//         buttonLabel: "Save Flow"
-//     });
-//     if (file_path) {
-//         var flo = JSON.stringify(RED.nodes.getFlows().flows, null , 2);
-//         fs.writeFile(file_path, flo, function(err) {
-//             if (err) { dialog.showErrorBox('Error', err); }
-//             else {
-//                 store.set("flows",file_path);
-//                 dialog.showMessageBoxSync({
-//                     icon: nrIcon,
-//                     message:"Flow file saved as\n\n"+file_path,
-//                     buttons: ["OK"]
-//                 });
-//                 app.relaunch();
-//                 app.exit();
-//             }
-//         });
-//     }
-// }
-
-// function openFlow() {
-//     const fileNames = dialog.showOpenDialogSync({
-//         title:"Load Flow File",
-//         filters:[{ name:'JSON', extensions:['json','flow'] }],
-//         properties: ["openFile","showHiddenFiles"],
-//         defaultPath: flowfile,
-//         buttonLabel: "Load Flow"
-//     });
-//     if (fileNames && fileNames.length > 0) {
-//         fs.readFile(fileNames[0], 'utf-8', function (err, data) {
-//             try {
-//                 var flo = JSON.parse(data);
-//                 if (Array.isArray(flo) && (flo.length > 0)) {
-//                     //RED.nodes.setFlows(flo,"full");
-//                     store.set("flows",fileNames[0]);
-//                     app.relaunch();
-//                     app.exit();
-//                 }
-//                 else {
-//                     dialog.showErrorBox("Error", "Failed to parse flow file.\n\n  "+fileNames[0]+".\n\nAre you sure it's a flow file ?");
-//                 }
-//             }
-//             catch(e) {
-//                 dialog.showErrorBox("Error", "Failed to load flow file.\n\n  "+fileNames[0]);
-//             }
-//         });
-//     }
-// }
-
 // Create the console log window
 function createConsole() {
     if (conWindow) { conWindow.show(); return; }
@@ -348,11 +189,7 @@ function createConsole() {
             contextIsolation: false
         }
     });
-    // conWindow.loadURL(url.format({
-    //     pathname: path.join(__dirname, urlconsole),
-    //     protocol: 'file:',
-    //     slashes: true
-    // }))
+
     conWindow.loadURL(path.join(__dirname, urlconsole));
     conWindow.webContents.on('did-finish-load', () => {
         conWindow.webContents.send('logBuff', logBuffer);
@@ -372,107 +209,27 @@ function createConsole() {
     conWindow.setTouchBar(consoleTouchBar);
 }
 
-// Create the main browser window
-// function createWindow() {
-//     mainWindow = new BrowserWindow({
-//         title: "Node-RED",
-//         width: 1024,
-//         height: 768,
-//         icon: path.join(__dirname, nrIcon),
-//         fullscreenable: true,
-//         autoHideMenuBar: false,
-//         // titleBarStyle: "hidden",
-//         kiosk: kioskMode,
-//         webPreferences: {
-//             nodeIntegration: false,
-//             nativeWindowOpen: true
-//         }
-//     });
-
-    // const menu = Menu.buildFromTemplate(template);
-    // Menu.setApplicationMenu(menu);
-
-    // if (process.platform !== 'darwin') { mainWindow.setAutoHideMenuBar(true); }
-    // mainWindow.loadURL(`file://${__dirname}/load.html`);
-
-    // mainWindow.webContents.on('did-get-response-details', function(event, status, newURL, originalURL, httpResponseCode) {
-    //     if ((httpResponseCode == 404) && (newURL == ("http://localhost:"+listenPort+urlStart))) {
-    //         setTimeout(mainWindow.webContents.reload, 250);
-    //     }
-    // });
-
-    // mainWindow.webContents.on('did-finish-load', (a) => {
-    //     console.log("FINISHED LOAD",a);
-    // });
-
-    // mainWindow.webContents.on("new-window", function(e, url, frameName, disposition, option) {
-    //     // if a child window opens... modify any other options such as width/height, etc
-    //     // in this case make the child overlap the parent exactly...
-    //     //console.log("NEW WINDOW",url);
-    //     var w = mainWindow.getBounds();
-    //     option.x = w.x;
-    //     option.y = w.y;
-    //     option.width = w.width;
-    //     option.height = w.height;
-    // })
-
-    // mainWindow.on('close', function(e) {
-    //     const choice = require('electron').dialog.showMessageBoxSync(this, {
-    //         type: 'question',
-    //         icon: nrIcon,
-    //         buttons: ['Yes', 'No'],
-    //         title: 'Confirm',
-    //         message: 'Are you sure you want to quit?'
-    //     });
-    //     if (choice === 1) {
-    //         e.preventDefault();
-    //     }
-    // });
-
-//     mainWindow.on('closed', () => {
-//         mainWindow = null;
-//     });
-
-// }
-
-// Called when Electron has finished initialization and is ready to create browser windows.
-// app.on('ready', () => {
-//     createTray()
-//     myWindow = createWindow()
-// })
-
 app.whenReady().then(() => {
     // createWindow();
     createConsole();
 })
 
 app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // Someone tried to run a second instance, we should focus our window.
-    // if (mainWindow) {
-    //     if (mainWindow.isMinimized()) { mainWindow.restore(); }
-    //     mainWindow.focus();
-    // }
+
 })
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
-    // On OS X it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') { app.quit(); }
 });
 
 app.on('activate', function() {
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    // if (mainWindow === null) {
-        // createWindow();
-        // mainWindow.loadURL("http://localhost:"+listenPort+urlStart);
-    // }
+    
 });
 
 // Start the Node-RED runtime, then load the inital dashboard page
 RED.start().then(function() {
     server.listen(listenPort,"localhost",function() {
-        // mainWindow.loadURL("http://localhost:"+listenPort+urlStart);
+       
     });
 });
