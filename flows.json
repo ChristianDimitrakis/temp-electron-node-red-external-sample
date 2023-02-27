@@ -1,0 +1,239 @@
+[
+    {
+        "id": "e4fe9c44.6dee1",
+        "type": "tab",
+        "label": "DIP relay flow",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "6eccc4f.c6a2a3c",
+        "type": "amqp-out",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "broker": "4a4bef9e6e37152a",
+        "exchangeName": "amq.headers",
+        "exchangeType": "headers",
+        "exchangeRoutingKey": "",
+        "exchangeRoutingKeyType": "str",
+        "exchangeDurable": true,
+        "amqpProperties": "",
+        "rpcTimeoutMilliseconds": "",
+        "outputs": 0,
+        "x": 510,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "cb5093bf.1d524",
+        "type": "inject",
+        "z": "e4fe9c44.6dee1",
+        "name": "Headers Input",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "properties",
+                "v": "{\"appId\":\"hello\",\"headers\":{\"name\":\"header-name\",\"topic\":\"header-topic\"}}",
+                "vt": "json"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"name\":\"hello-there\"}",
+        "payloadType": "json",
+        "x": 230,
+        "y": 880,
+        "wires": [
+            [
+                "6eccc4f.c6a2a3c"
+            ]
+        ]
+    },
+    {
+        "id": "b0757ebb2c4b0d5b",
+        "type": "http in",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "url": "/api",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 600,
+        "wires": [
+            [
+                "8ae0f3164b8e3331",
+                "ce4e57631d39cf99"
+            ]
+        ]
+    },
+    {
+        "id": "fe234a038bfb63a5",
+        "type": "http response",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 550,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "9b6c40f0a762bcf5",
+        "type": "inject",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 150,
+        "y": 460,
+        "wires": [
+            [
+                "967522ead6c7c2b1"
+            ]
+        ]
+    },
+    {
+        "id": "801c0ec8f260cc1c",
+        "type": "http request",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "query",
+        "url": "http://node-red:1880/api?TagID=2",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 350,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "967522ead6c7c2b1",
+        "type": "function",
+        "z": "e4fe9c44.6dee1",
+        "name": "function 1",
+        "func": "msg = {};\nmsg.req = {};\n//msg.payload={\"prop\":\"value\"}\nmsg.req.query =\"?dip-correlation-id=2a339599-de9d-4671-b221-9eeaf76ca71c&dip-im-origin-machine=07c2cd5c-e907-45dd-a0e3-83f608805e93&dip-other=2345\"\nmsg.headers = {};\nmsg.headers[\"content-type\"] = \"application/json\";\nmsg.headers[\"dip-im-origin-machine\"] = \"07c2cd5c-e907-45dd-a0e3-83f608805e93\";\nmsg.headers[\"dip-correlation-id\"] = \"2a339599-de9d-4671-b221-9eeaf76ca71c\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 160,
+        "y": 380,
+        "wires": [
+            [
+                "801c0ec8f260cc1c",
+                "963b67ce5e709ab9"
+            ]
+        ]
+    },
+    {
+        "id": "8ae0f3164b8e3331",
+        "type": "template",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "This is the payload: {{payload}} !",
+        "output": "str",
+        "x": 440,
+        "y": 540,
+        "wires": [
+            [
+                "fe234a038bfb63a5"
+            ]
+        ]
+    },
+    {
+        "id": "ce4e57631d39cf99",
+        "type": "function",
+        "z": "e4fe9c44.6dee1",
+        "name": "function 2",
+        "func": "node.warn(\"method:\" + msg.req.method);\n\nmsg.properties = {};\nmsg.properties[\"headers\"] = msg.req.headers;\n\nmsg.properties[\"headers\"][\"System\"] = \"55d311a3-3cc3-4e34-a8be-e6f0820722a7\";\nmsg.properties[\"headers\"][\"Category\"] = \"96487241-babb-4eb3-bbf4-3f2d86f9aba7\";\n\nif (msg.req.method == \"GET\") {\n\n    for (const [key, value] of Object.entries(msg.req.query)) {\n        msg.properties[\"headers\"][key]= value;\n        \n    }\n    node.warn(\"new prop;other:\" + msg.properties.headers[\"dip-other\"]);\n}\n\nnode.log(\"new prop;machine-id:\" + msg.properties.headers[\"dip-im-origin-machine\"]);\nnode.log(\"new prop;correlation-id:\" + msg.properties.headers[\"dip-correlation-id\"]);\n\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 660,
+        "wires": [
+            [
+                "6eccc4f.c6a2a3c"
+            ]
+        ]
+    },
+    {
+        "id": "6fb4a1d7df646d9e",
+        "type": "http in",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "url": "/api",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 720,
+        "wires": [
+            [
+                "ce4e57631d39cf99",
+                "8ae0f3164b8e3331"
+            ]
+        ]
+    },
+    {
+        "id": "963b67ce5e709ab9",
+        "type": "http request",
+        "z": "e4fe9c44.6dee1",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://node-red:1880/api/?dip-other=test",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 370,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a4bef9e6e37152a",
+        "type": "amqp-broker",
+        "name": "rabbit",
+        "host": "rabbitMQ",
+        "port": "5672",
+        "vhost": "",
+        "tls": false,
+        "credsFromSettings": true,
+        "credentials": {
+            "MW_CONTRIB_AMQP_USERNAME,": "guest",
+            "MW_CONTRIB_AMQP_PASSWORD": "guest"
+        }
+    }
+]

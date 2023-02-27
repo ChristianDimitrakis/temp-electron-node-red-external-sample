@@ -16,4 +16,8 @@ ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/zscaler.pem
 
 WORKDIR electron-node-red
 
-RUN yarn
+COPY main.js main.js
+COPY package.json package.json
+COPY flows.json flows.json
+
+RUN yarn && yarn dist -w
