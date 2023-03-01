@@ -2,25 +2,15 @@
 const pkg = require('./package.json');
 let options;
 if (pkg.hasOwnProperty("NRelectron")) { options = pkg["NRelectron"] }
-let packages;
-if (pkg.hasOwnProperty("dependencies")) { packages = pkg["dependencies"] }
 
-// Some settings you can edit if you don't set them in package.json
-//console.log(options)
 const editable = options.editable || false;      // set this to false to create a run only application - no editor/no console
 const addNodes = options.addNodes || false;      // set to false to block installing extra nodes
 let flowfile = options.flowFile || 'flows.json'; // default Flows file name - loaded at start
 
-const urldash = "/ui/#/0";          // url for the dashboard page
 const urledit = "/red";             // url for the editor page
 const urlconsole = "/console.htm";  // url for the console page
 const nrIcon = "nodered.png"        // Icon for the app in root dir (usually 256x256)
 
-let urlStart = urldash;                      // Start on this page
-if (!packages.hasOwnProperty("node-red-dashboard")) { urlStart = urledit; }
-if (options.start.toLowerCase() === "editor") { urlStart = urledit; }
-
-// TCP port to use
 const listenPort = "18880";                           // fix it if you like
 
 const os = require('os');
@@ -42,9 +32,6 @@ if (!gotTheLock) { console.log("Second instance - quitting."); app.quit(); }
 
 var RED = require("node-red");
 var red_app = express();
-
-// Add a simple route for static content served from 'public'
-red_app.use("/",express.static("web"));
 
 // Create a server
 var server = http.createServer(red_app);
@@ -96,11 +83,6 @@ if (editable === true) {
 else { store.clear(); }
 
 flowfile = store.get('flows',flowfile);
-var myFlow;
-try { myFlow = fs.readFileSync(flowfile).toString() }
-catch(e) { myFlow = []; }
-if (urlStart == urldash && myFlow.indexOf("ui_base") == -1) { urlStart = urledit; }
-myFlow = null;
 
 console.log("Store",app.getPath('userData'))
 console.log("FlowFile :",flowfile);
@@ -219,7 +201,6 @@ function createConsole() {
 }
 
 app.whenReady().then(() => {
-    // createWindow();
     createConsole();
 })
 
