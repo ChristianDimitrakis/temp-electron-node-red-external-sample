@@ -114,8 +114,14 @@ const levels = [ "", "fatal", "error", "warn", "info", "debug", "trace" ];
 
 ipc.on('clearLogBuffer', function() { logBuffer = []; });
 
+process.env.MW_CONTRIB_AMQP_USERNAME = '';
+process.env.MW_CONTRIB_AMQP_PASSWORD = '';
+
 // Create the settings object - see default settings.js file for other options
 var settings = {
+    MW_CONTRIB_AMQP_USERNAME: 'guest',
+    MW_CONTRIB_AMQP_PASSWORD: 'guest',
+
     uiHost: "localhost",    // only allow local connections, remove if you want to allow external access
     uiPort: listenPort,
     httpAdminRoot: "/red",  // set to false to disable editor and deploy
@@ -129,7 +135,10 @@ var settings = {
         header: { title: options.productName },
         palette: { editable:addNodes }
     },    // enable projects feature
-    functionGlobalContext: { },    // enables global context - add extras ehre if you need them
+    functionGlobalContext: {
+        dipSystem: '55d311a3-3cc3-4e34-a8be-e6f0820722a7',
+        dipCategory: '96487241-babb-4eb3-bbf4-3f2d86f9aba7'
+    },
     functionExternalModules: true,
     logging: {
         websock: {

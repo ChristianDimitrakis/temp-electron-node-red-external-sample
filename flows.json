@@ -7,6 +7,16 @@
         "info": ""
     },
     {
+        "id": "4a4bef9e6e37152a",
+        "type": "amqp-broker",
+        "name": "rabbit",
+        "host": "localhost",
+        "port": "5672",
+        "vhost": "",
+        "tls": false,
+        "credsFromSettings": true
+    },
+    {
         "id": "6eccc4f.c6a2a3c",
         "type": "amqp-out",
         "z": "e4fe9c44.6dee1",
@@ -110,7 +120,7 @@
         "method": "POST",
         "ret": "obj",
         "paytoqs": "query",
-        "url": "http://node-red:1880/api?TagID=2",
+        "url": "http://localhost:18880/api?TagID=2",
         "tls": "",
         "persist": false,
         "proxy": "",
@@ -168,9 +178,9 @@
         "type": "function",
         "z": "e4fe9c44.6dee1",
         "name": "function 2",
-        "func": "node.warn(\"method:\" + msg.req.method);\n\nmsg.properties = {};\nmsg.properties[\"headers\"] = msg.req.headers;\n\nmsg.properties[\"headers\"][\"System\"] = \"55d311a3-3cc3-4e34-a8be-e6f0820722a7\";\nmsg.properties[\"headers\"][\"Category\"] = \"96487241-babb-4eb3-bbf4-3f2d86f9aba7\";\n\nif (msg.req.method == \"GET\") {\n\n    for (const [key, value] of Object.entries(msg.req.query)) {\n        msg.properties[\"headers\"][key]= value;\n        \n    }\n    node.warn(\"new prop;other:\" + msg.properties.headers[\"dip-other\"]);\n}\n\nnode.log(\"new prop;machine-id:\" + msg.properties.headers[\"dip-im-origin-machine\"]);\nnode.log(\"new prop;correlation-id:\" + msg.properties.headers[\"dip-correlation-id\"]);\n\n\nreturn msg;",
+        "func": "node.warn(\"method:\" + msg.req.method);\n\nmsg.properties = {};\nmsg.properties[\"headers\"] = msg.req.headers;\n\nmsg.properties[\"headers\"][\"System\"] = global.get('dipSystem');\nmsg.properties[\"headers\"][\"Category\"] = global.get('dipCategory');\n\nif (msg.req.method == \"GET\") {\n\n    for (const [key, value] of Object.entries(msg.req.query)) {\n        msg.properties[\"headers\"][key]= value;\n        \n    }\n    node.warn(\"new prop;other:\" + msg.properties.headers[\"dip-other\"]);\n}\nnode.warn(\"new prop;machine-id:\" + msg.properties.headers[\"dip-im-origin-machine\"]);\nnode.warn(\"new prop;correlation-id:\" + msg.properties.headers[\"dip-correlation-id\"]);\n\n\nreturn msg;",
         "outputs": 1,
-        "noerr": 0,
+        "noerr": 6,
         "initialize": "",
         "finalize": "",
         "libs": [],
@@ -208,7 +218,7 @@
         "method": "GET",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "http://node-red:1880/api/?dip-other=test",
+        "url": "http://localhost:18880/api/?dip-other=test",
         "tls": "",
         "persist": false,
         "proxy": "",
@@ -221,19 +231,5 @@
         "wires": [
             []
         ]
-    },
-    {
-        "id": "4a4bef9e6e37152a",
-        "type": "amqp-broker",
-        "name": "rabbit",
-        "host": "rabbitMQ",
-        "port": "5672",
-        "vhost": "",
-        "tls": false,
-        "credsFromSettings": true,
-        "credentials": {
-            "MW_CONTRIB_AMQP_USERNAME,": "guest",
-            "MW_CONTRIB_AMQP_PASSWORD": "guest"
-        }
     }
 ]
